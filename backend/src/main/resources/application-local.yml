@@ -1,0 +1,16 @@
+spring:
+  flyway:
+    clean-disabled: true
+    baseline-on-migrate: true
+    enabled: true
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+  datasource:
+    driver-class-name: org.sqlite.JDBC
+    url: jdbc:sqlite:data/url_shortener.db
+
+app:
+  base-url: http://localhost:8080/
