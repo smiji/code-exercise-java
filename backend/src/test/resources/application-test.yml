@@ -1,0 +1,9 @@
+spring:
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: 'create-drop'
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+  datasource:
+    driver-class-name: org.sqlite.JDBC
+    url: 'jdbc:sqlite::memory:'
