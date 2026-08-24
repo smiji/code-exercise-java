@@ -10,11 +10,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class AppStarter implements CommandLineRunner {
 
-    @Value("${spring.application.name:URL Shortener}")
-    private String appName;
-
     private static final Logger logger = LoggerFactory.getLogger(AppStarter.class);
 
+    @Value("${spring.application.name:URL Shortener}")
+    private String appName;
+    
     public static void main(String[] args) {
         SpringApplication.run(AppStarter.class, args);
     }
