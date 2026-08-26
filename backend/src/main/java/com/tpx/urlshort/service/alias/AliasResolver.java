@@ -20,7 +20,6 @@ public class AliasResolver {
     }
 
     public String resolveAndGenerate(UrlRequestDTO urlRequestDTO) {
-
         logger.debug("Inside the resolveAndGenerate, ");
         if (urlRequestDTO == null || urlRequestDTO.fullUrl() == null || urlRequestDTO.fullUrl().isEmpty()) {
             logger.error("Invalid parameters , request or actual url cannot be null or empty ");
