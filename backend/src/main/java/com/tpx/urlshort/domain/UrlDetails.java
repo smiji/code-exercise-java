@@ -27,6 +27,7 @@ public class UrlDetails {
     public UrlDetails() {
     }
 
+
     public UrlDetails(Long id, String actualUrl, String shortUrl) {
         this.id = id;
         this.actualUrl = actualUrl;

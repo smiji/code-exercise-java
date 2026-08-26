@@ -82,8 +82,8 @@ class UrlRepositoryIT {
     void testGetAll_paginated() {
         List<UrlDetails> urlDetailsLst = getUrlDetails();
         urlRepository.saveAll(urlDetailsLst);
-        Pageable pageable = PageRequest.of(0, 2, Sort.by("createdAt").descending());
-        Page<UrlDetails> allResp = urlRepository.findAll(pageable);
+        Pageable pageable = PageRequest.of(0, 2);
+        Page<UrlDetails> allResp = urlRepository.findAllByOrderByCreatedAtDescShortUrlAsc(pageable);
         Assertions.assertNotNull(allResp);
         Assertions.assertEquals(2, allResp.getContent().size());
         Assertions.assertEquals(2, allResp.getTotalPages());
