@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
@@ -33,6 +34,9 @@ class UrlServiceIT {
     @Autowired
     private UrlRepository urlRepository;
 
+    @Value("${app.base-url:http://localhost:8080/}")
+    String appBaseUrl;
+
     @BeforeEach
     void cleanUp() {
         urlRepository.deleteAll();
@@ -46,7 +50,7 @@ class UrlServiceIT {
         UrlResponseDTO response = urlService.shortenAndPersistURL(request);
 
         Assertions.assertNotNull(response);
-        Assertions.assertEquals(customAlias, response.shortUrl());
+        Assertions.assertEquals(appBaseUrl+customAlias, response.shortUrl());
         Assertions.assertEquals(actualUrl, response.actualUrl());
 
         Optional<UrlDetails> persisted = urlRepository.findByShortUrl(customAlias);
@@ -85,7 +89,7 @@ class UrlServiceIT {
 
         UrlResponseDTO response = urlService.findByAlias(shortUrl);
 
-        Assertions.assertEquals(shortUrl, response.shortUrl());
+        Assertions.assertEquals(appBaseUrl+shortUrl, response.shortUrl());
         Assertions.assertEquals(actualUrl, response.actualUrl());
     }
 
@@ -123,7 +127,7 @@ class UrlServiceIT {
 
     @Test
     void delete_whenAliasDoesNotExist_noException() {
-        Assertions.assertDoesNotThrow(() -> urlService.delete("not-here"));
+        Assertions.assertThrows(ItemNotFoundException.class,()->urlService.delete("not-here"));
     }
 
     @Test
@@ -136,9 +140,9 @@ class UrlServiceIT {
         Assertions.assertEquals(3, page0.getContent().size());
 
         // createdAt desc: latest timestamp first; then shortUrl asc when createdAt ties
-        Assertions.assertEquals("xy", page0.getContent().get(0).shortUrl());
-        Assertions.assertEquals("pq", page0.getContent().get(1).shortUrl());
-        Assertions.assertEquals("AB", page0.getContent().get(2).shortUrl());
+        Assertions.assertEquals(appBaseUrl+"xy", page0.getContent().get(0).shortUrl());
+        Assertions.assertEquals(appBaseUrl+"pq", page0.getContent().get(1).shortUrl());
+        Assertions.assertEquals(appBaseUrl+"AB", page0.getContent().get(2).shortUrl());
 
         UrlDetails urlDetails = new UrlDetails();
         urlDetails.setActualUrl("http://abcd/123243");
@@ -151,9 +155,9 @@ class UrlServiceIT {
 
         Page<UrlResponseDTO> page1 = urlService.getAll(pageable);
         Assertions.assertEquals(3, page1.getSize());
-        Assertions.assertEquals("zzz", page1.getContent().get(0).shortUrl());
-        Assertions.assertEquals("xy", page1.getContent().get(1).shortUrl());
-        Assertions.assertEquals("pq", page1.getContent().get(2).shortUrl());
+        Assertions.assertEquals(appBaseUrl+"zzz", page1.getContent().get(0).shortUrl());
+        Assertions.assertEquals(appBaseUrl+"xy", page1.getContent().get(1).shortUrl());
+        Assertions.assertEquals(appBaseUrl+"pq", page1.getContent().get(2).shortUrl());
 
     }
 
