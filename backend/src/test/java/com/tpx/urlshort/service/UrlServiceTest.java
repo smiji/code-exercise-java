@@ -23,6 +23,7 @@ class UrlServiceTest {
     @Test
     void testShortenAndPersists() {
         String finalAlias = "my-final-alias";
+        String expectedShortUrl = "http://localhost:8080/my-final-alias";
 
         UrlRequestDTO urlRequestDTO = new UrlRequestDTO("my-full-url", "alias");
         UrlDetails savedUrlDetails = new UrlDetails(1L, "my-full-url", finalAlias);
@@ -33,7 +34,7 @@ class UrlServiceTest {
 
         UrlService urlService = new UrlService(urlRepositoryMock, aliasResolverMock);
         UrlResponseDTO urlResponseDTO = urlService.shortenAndPersistURL(urlRequestDTO);
-        Assertions.assertEquals(finalAlias, urlResponseDTO.shortUrl());
+        Assertions.assertEquals(expectedShortUrl, urlResponseDTO.shortUrl());
     }
 
     @Test
@@ -110,14 +111,17 @@ class UrlServiceTest {
     }
 
     @Test
-    void testDelete_aliasMissing_shouldNotThrow() {
+    void testDelete_aliasMissing_shouldThrowItemNotFoundException() {
         String alias = "missing-alias";
+        String expectedErrorMessage = "No details found for the alias missing-alias";
 
         Mockito.when(urlRepositoryMock.findByShortUrl(alias)).thenReturn(Optional.empty());
 
         UrlService urlService = new UrlService(urlRepositoryMock, aliasResolverMock);
 
-        Assertions.assertDoesNotThrow(() -> urlService.delete(alias));
+        ItemNotFoundException itemNotFoundException = Assertions.assertThrows(ItemNotFoundException.class,
+                () -> urlService.delete(alias));
+        Assertions.assertEquals(expectedErrorMessage, itemNotFoundException.getMessage());
         Mockito.verify(urlRepositoryMock, Mockito.never()).deleteById(Mockito.anyLong());
     }
 
