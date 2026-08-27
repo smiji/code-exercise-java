@@ -6,3 +6,32 @@ spring:
       - local
 server:
   port: 8080
+
+springdoc:
+  swagger-ui:
+    enabled: true
+  api-docs:
+    enabled: true
+    path: /api/v1/api-docs
+  packages-to-scan: com.tpx.urlshort.controller
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+  endpoint:
+    health:
+      show-details: always
+
+  metrics:
+    enable:
+      jvm: true
+
+snowflake:
+  worker-id: 2
+  datacenter-id: 2
+  epoch-reference: 1767225600
+
