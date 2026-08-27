@@ -13,7 +13,7 @@ public class DTOMapper {
         return urlDetails;
     }
 
-    public static UrlResponseDTO mapToResponse(UrlDetails urlDetails) {
-        return new UrlResponseDTO(urlDetails.getShortUrl(), urlDetails.getActualUrl());
+    public static UrlResponseDTO mapToResponse(UrlDetails urlDetails, String domain) {
+        return new UrlResponseDTO(domain + urlDetails.getShortUrl(), urlDetails.getActualUrl());
     }
 }
