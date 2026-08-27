@@ -11,6 +11,7 @@ import com.tpx.urlshort.repository.UrlRepository;
 import com.tpx.urlshort.service.alias.AliasResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,9 @@ public class UrlService {
     private final UrlRepository urlRepository;
     private final AliasResolver aliasResolver;
 
+    @Value("${app.base-url:http://localhost:8080/}")
+    private String appBaseUrl = "http://localhost:8080/";
+
     public UrlService(UrlRepository urlRepository, AliasResolver resolver) {
         this.urlRepository = urlRepository;
         this.aliasResolver = resolver;
@@ -35,8 +39,8 @@ public class UrlService {
         String finalAlias = aliasResolver.resolveAndGenerate(urlRequestDTO);
         try {
             logger.info("final alias - {} generated for the url - {}", finalAlias, urlRequestDTO.fullUrl());
-            return DTOMapper
-                    .mapToResponse(urlRepository.saveAndFlush(DTOMapper.mapToResponse(urlRequestDTO, finalAlias)));
+            return DTOMapper.mapToResponse(
+                    urlRepository.saveAndFlush(DTOMapper.mapToResponse(urlRequestDTO, finalAlias)), appBaseUrl);
         } catch (DataAccessException e) {
             String message = String.format("The alias -%s already exist", finalAlias);
             logger.error("The alias -{} already  exist , reason: {}", finalAlias, e.getMessage());
@@ -52,12 +56,13 @@ public class UrlService {
             logger.error(message);
             throw new ItemNotFoundException(message);
         }
-        return DTOMapper.mapToResponse(urlDetailsByShortUrl.get());
+        return DTOMapper.mapToResponse(urlDetailsByShortUrl.get(), appBaseUrl);
 
     }
 
     public Page<UrlResponseDTO> getAll(Pageable pageable) {
-        return urlRepository.findAllByOrderByCreatedAtDescShortUrlAsc(pageable).map(DTOMapper::mapToResponse);
+        return urlRepository.findAllByOrderByCreatedAtDescShortUrlAsc(pageable)
+                .map(urlDetails -> DTOMapper.mapToResponse(urlDetails, appBaseUrl));
     }
 
     public void delete(String alias) {
@@ -65,7 +70,7 @@ public class UrlService {
         if (urlDetailsByAlias.isEmpty()) {
             String message = String.format("No details found for the alias %s", alias);
             logger.debug(message);
-            return;
+            throw new ItemNotFoundException(message);
         }
         urlRepository.deleteById(urlDetailsByAlias.get().getId());
     }
