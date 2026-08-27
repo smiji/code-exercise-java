@@ -27,7 +27,7 @@ public class UrlService {
     private final AliasResolver aliasResolver;
 
     @Value("${app.base-url:http://localhost:8080/}")
-    private String appBaseUrl;
+    String appBaseUrl;
 
     public UrlService(UrlRepository urlRepository, AliasResolver resolver) {
         this.urlRepository = urlRepository;

@@ -33,6 +33,7 @@ class UrlServiceTest {
         Mockito.when(urlRepositoryMock.saveAndFlush(Mockito.any(UrlDetails.class))).thenReturn(savedUrlDetails);
 
         UrlService urlService = new UrlService(urlRepositoryMock, aliasResolverMock);
+        urlService.appBaseUrl="http://localhost:8080/";
         UrlResponseDTO urlResponseDTO = urlService.shortenAndPersistURL(urlRequestDTO);
         Assertions.assertEquals(expectedShortUrl, urlResponseDTO.shortUrl());
     }
@@ -47,6 +48,7 @@ class UrlServiceTest {
         Mockito.when(urlRepositoryMock.saveAndFlush(Mockito.any(UrlDetails.class)))
                 .thenThrow(new DataIntegrityViolationException("Already present"));
         UrlService urlService = new UrlService(urlRepositoryMock, aliasResolverMock);
+        urlService.appBaseUrl="http://localhost:8080/";
         AliasAlreadyPresentException aliasAlreadyPresentException = Assertions.assertThrows(
                 AliasAlreadyPresentException.class,
                 () -> urlService.shortenAndPersistURL(urlRequestDTO));
@@ -66,6 +68,7 @@ class UrlServiceTest {
         Mockito.when(urlRepositoryMock.findByShortUrl(finalAlias)).thenReturn(savedUrlDetailsOptional);
 
         UrlService urlService = new UrlService(urlRepositoryMock, aliasResolverMock);
+        urlService.appBaseUrl="http://localhost:8080/";
         UrlResponseDTO byAlias = urlService.findByAlias(finalAlias);
         Assertions.assertEquals(actualUrl, byAlias.actualUrl());
     }
@@ -75,6 +78,7 @@ class UrlServiceTest {
         String finalAlias = null;
         String expectedErrorMessage = "Invalid parameter alias - null";
         UrlService urlService = new UrlService(urlRepositoryMock, aliasResolverMock);
+        urlService.appBaseUrl="http://localhost:8080/";
         IllegalParametersException illegalParametersException = Assertions.assertThrows(
                 IllegalParametersException.class,
                 () -> urlService.findByAlias(finalAlias));
@@ -91,6 +95,7 @@ class UrlServiceTest {
         // handle mock
         Mockito.when(urlRepositoryMock.findByShortUrl(finalAlias)).thenReturn(savedUrlDetailsOptional);
         UrlService urlService = new UrlService(urlRepositoryMock, aliasResolverMock);
+        urlService.appBaseUrl="http://localhost:8080/";
         ItemNotFoundException itemNotFoundException = Assertions.assertThrows(ItemNotFoundException.class,
                 () -> urlService.findByAlias(finalAlias));
 
@@ -105,6 +110,7 @@ class UrlServiceTest {
         Mockito.when(urlRepositoryMock.findByShortUrl(alias)).thenReturn(Optional.of(savedUrlDetails));
 
         UrlService urlService = new UrlService(urlRepositoryMock, aliasResolverMock);
+        urlService.appBaseUrl="http://localhost:8080/";
         urlService.delete(alias);
 
         Mockito.verify(urlRepositoryMock).deleteById(1L);
@@ -118,6 +124,7 @@ class UrlServiceTest {
         Mockito.when(urlRepositoryMock.findByShortUrl(alias)).thenReturn(Optional.empty());
 
         UrlService urlService = new UrlService(urlRepositoryMock, aliasResolverMock);
+        urlService.appBaseUrl="http://localhost:8080/";
 
         ItemNotFoundException itemNotFoundException = Assertions.assertThrows(ItemNotFoundException.class,
                 () -> urlService.delete(alias));
@@ -130,6 +137,8 @@ class UrlServiceTest {
         String expectedErrorMessage = "Invalid parameter alias - null";
 
         UrlService urlService = new UrlService(urlRepositoryMock, aliasResolverMock);
+        urlService.appBaseUrl="http://localhost:8080/";
+        
         IllegalParametersException illegalParametersException = Assertions.assertThrows(
                 IllegalParametersException.class,
                 () -> urlService.delete(null));
