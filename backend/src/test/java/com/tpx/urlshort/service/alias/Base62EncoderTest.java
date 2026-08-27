@@ -13,11 +13,11 @@ class Base62EncoderTest {
         String expectedValue = "aaaaa1Z";
         Assertions.assertEquals(expectedValue, encodeFirst);
 
-        //This is expected to be deterministic
+        // This is expected to be deterministic
         String encodeSecond = base62Encoder.encode(123);
         Assertions.assertEquals(encodeFirst, encodeSecond);
 
-        //its length must be 7
+        // its length must be 7
         Assertions.assertEquals(7, encodeFirst.length());
         Assertions.assertEquals(7, encodeSecond.length());
     }
@@ -26,7 +26,8 @@ class Base62EncoderTest {
     void testEncodeWhenNumber_negative() {
         Base62Encoder base62Encoder = new Base62Encoder();
         String expectedError = "Invalid input too less to consider -123";
-        IllegalParametersException illegalParametersException = Assertions.assertThrows(IllegalParametersException.class, () -> base62Encoder.encode(-123));
+        IllegalParametersException illegalParametersException = Assertions
+                .assertThrows(IllegalParametersException.class, () -> base62Encoder.encode(-123));
         Assertions.assertEquals(expectedError, illegalParametersException.getMessage());
     }
 
@@ -35,7 +36,18 @@ class Base62EncoderTest {
         Base62Encoder base62Encoder = new Base62Encoder();
         long input = 3521614606208L;
         String expectedError = "Value 3521614606208 exceeds maximum capacity for 7 chars ( 3521614606207 )";
-        IllegalParametersException illegalParametersException = Assertions.assertThrows(IllegalParametersException.class, () -> base62Encoder.encode(input));
+        IllegalParametersException illegalParametersException = Assertions
+                .assertThrows(IllegalParametersException.class, () -> base62Encoder.encode(input));
         Assertions.assertEquals(expectedError, illegalParametersException.getMessage());
+    }
+
+    @Test
+    void testEncode_largeValue_shouldNotOverflowIndex() {
+        Base62Encoder base62Encoder = new Base62Encoder();
+        long input = 3_000_000_000L;
+
+        String encoded = Assertions.assertDoesNotThrow(() -> base62Encoder.encode(input));
+
+        Assertions.assertEquals(7, encoded.length());
     }
 }

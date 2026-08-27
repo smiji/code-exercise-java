@@ -10,7 +10,7 @@ public class CustomAliasGenerator implements AliasGenerator {
     @Override
     public String generate(UrlRequestDTO requestDTO) {
         if (requestDTO.customAlias() == null || requestDTO.customAlias().isEmpty()) {
-            throw new IllegalArgumentException("Custome alias cannot be null or empty");
+            throw new IllegalArgumentException("Custom alias cannot be null or empty");
         }
         return requestDTO.customAlias().trim();
     }
