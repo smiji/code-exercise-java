@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { API_BASE_URL } from '../api/config';
 import type { UrlRecord } from '../types/UrlRecord';
 
 type PageResponse<T> = {
@@ -31,6 +32,7 @@ function UrlList({ refreshToken = 0 }: UrlListProps): React.ReactElement {
   const [filter, setFilter] = useState<string>('');
   const [page, setPage] = useState<number>(0);
   const [pageSize, setPageSize] = useState<number>(10);
+  const [reloadToken, setReloadToken] = useState<number>(0);
   const [pageData, setPageData] = useState<PageResponse<UrlRecord>>({
     content: [],
     totalPages: 0,
@@ -60,7 +62,7 @@ function UrlList({ refreshToken = 0 }: UrlListProps): React.ReactElement {
           params.set('alias', filter.trim());
         }
         console.log('Fetching URLs with params:', params.toString());
-        const response = await fetch(`http://localhost:8081/api/v1/urls?${params.toString()}`);
+        const response = await fetch(`${API_BASE_URL}/api/v1/urls?${params.toString()}`);
 
         if (!response.ok) {
           throw new Error('Failed to fetch URLs');
@@ -76,7 +78,7 @@ function UrlList({ refreshToken = 0 }: UrlListProps): React.ReactElement {
     };
 
     fetchUrls();
-  }, [page, pageSize, filter, refreshToken]);
+  }, [page, pageSize, filter, refreshToken, reloadToken]);
 
   const filteredUrls = useMemo(() => {
     return pageData.content.filter((item) => {
@@ -92,7 +94,7 @@ function UrlList({ refreshToken = 0 }: UrlListProps): React.ReactElement {
 
     try {
       const response = await fetch(
-        `http://localhost:8081/api/v1/${encodeURIComponent(alias)}`,
+        `${API_BASE_URL}/api/v1/${encodeURIComponent(alias)}`,
         { method: 'DELETE' }
       );
 
@@ -105,7 +107,7 @@ function UrlList({ refreshToken = 0 }: UrlListProps): React.ReactElement {
       if (pageData.content.length === 1 && page > 0) {
         setPage(page - 1);
       } else {
-        setPage(0);
+        setReloadToken((prev) => prev + 1);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to delete');

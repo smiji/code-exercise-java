@@ -1,7 +1,6 @@
 import type { ApiErrorResponse } from '../types/ApiErrorResponse';
 import type { UrlRequest, UrlResponse, UrlItem } from '../types/url';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081';
+import { API_BASE_URL } from './config';
 
 export class ApiError extends Error {
   details: ApiErrorResponse;

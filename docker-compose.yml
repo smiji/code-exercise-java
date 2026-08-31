@@ -17,10 +17,12 @@ services:
       dockerfile: Dockerfile
     container_name: spring-boot-api
     ports:
-      - "8080:8080"
+      - "8585:8585"
     environment:
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost}
+      - APP_BASE_URL=${APP_BASE_URL:-http://localhost:8585/api/v1/}
     depends_on:
       - redis
     networks:
@@ -34,6 +36,11 @@ services:
     container_name: react-ui
     ports:
       - "80:80"
+    environment:
+      - VITE_API_PROTOCOL=${VITE_API_PROTOCOL:-http}
+      - VITE_API_HOST=${VITE_API_HOST:-localhost}
+      - VITE_API_PORT=${VITE_API_PORT:-8585}
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-}
     depends_on:
       - backend
     networks:
