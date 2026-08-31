@@ -17,6 +17,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -38,6 +39,7 @@ public class UrlService {
     }
 
     // for shortening the url
+    @Transactional
     public UrlResponseDTO shortenAndPersistURL(UrlRequestDTO urlRequestDTO) {
         String finalAlias = aliasResolver.resolveAndGenerate(urlRequestDTO);
         try {
@@ -87,6 +89,7 @@ public class UrlService {
                 .map(urlDetails -> DTOMapper.mapToResponse(urlDetails, appBaseUrl));
     }
 
+    @Transactional
     public void delete(String alias) {
         Optional<UrlDetails> urlDetailsByAlias = findByAliasCommon(alias);
         if (urlDetailsByAlias.isEmpty()) {
