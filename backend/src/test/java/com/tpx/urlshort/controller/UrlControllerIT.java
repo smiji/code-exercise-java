@@ -1,6 +1,7 @@
 package com.tpx.urlshort.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tpx.urlshort.cache.redis.UrlCacheService;
 import com.tpx.urlshort.domain.UrlDetails;
 import com.tpx.urlshort.dto.UrlRequestDTO;
 import com.tpx.urlshort.repository.UrlRepository;
@@ -10,12 +11,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -37,33 +42,48 @@ class UrlControllerIT {
   @Autowired
   private UrlRepository urlRepository;
 
+  @MockBean
+  private UrlCacheService urlCacheService;
+
   @BeforeEach
   void cleanUp() {
     urlRepository.deleteAll();
+    // Mock cache to always return empty (cache miss) - forces DB lookup
+    when(urlCacheService.get(anyString())).thenReturn(Optional.empty());
   }
 
   @Test
   void shortenUrl_shouldReturn201AndPersist() throws Exception {
-    UrlRequestDTO request = new UrlRequestDTO("https://example.com/some/path", "my-custom-alias");
+    UrlRequestDTO request = new UrlRequestDTO("https://example.com/some/path", "mycustomalias");
 
     mockMvc.perform(post("/api/v1/shorten")
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.shortUrl").value("http://localhost:8080/my-custom-alias"))
+        .andExpect(jsonPath("$.shortUrl").value("http://localhost:8080/mycustomalias"))
         .andExpect(jsonPath("$.actualUrl").value("https://example.com/some/path"));
 
-    Assertions.assertTrue(urlRepository.findByShortUrl("my-custom-alias").isPresent());
+    Assertions.assertTrue(urlRepository.findByShortUrl("mycustomalias").isPresent());
+  }
+
+  @Test
+  void shortenUrl_whenCustomAliasHasSpecialCharacters_shouldReturn400() throws Exception {
+    UrlRequestDTO request = new UrlRequestDTO("https://example.com/some/path", "my alias!");
+
+    mockMvc.perform(post("/api/v1/shorten")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isBadRequest());
   }
 
   @Test
   void shortenUrl_whenAliasAlreadyExists_shouldReturn400() throws Exception {
     UrlDetails existing = new UrlDetails();
     existing.setActualUrl("https://already.com");
-    existing.setShortUrl("dup-alias");
+    existing.setShortUrl("dupalias");
     urlRepository.saveAndFlush(existing);
 
-    UrlRequestDTO request = new UrlRequestDTO("https://example.com/new", "dup-alias");
+    UrlRequestDTO request = new UrlRequestDTO("https://example.com/new", "dupalias");
 
     mockMvc.perform(post("/api/v1/shorten")
         .contentType(MediaType.APPLICATION_JSON)

@@ -7,9 +7,17 @@ spring:
   datasource:
     driver-class-name: org.sqlite.JDBC
     url: 'jdbc:sqlite::memory:'
-
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
 app:
   base-url: http://localhost:8080/
+  cors:
+    allowed-origins:
+      - http://localhost:5173
+      - http://localhost:5174
 
 snowflake:
   worker-id: 2

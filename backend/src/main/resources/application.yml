@@ -4,28 +4,34 @@ spring:
   profiles:
     active:
       - local
+  flyway:
+    clean-disabled: true
+    baseline-on-migrate: true
+    enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+
 server:
-  port: 8080
+  port: 8585
+  tomcat:
+    max-http-post-size: 1MB
+    max-http-request-header-size: 8KB
 
 springdoc:
-  swagger-ui:
-    enabled: true
-  api-docs:
-    enabled: true
-    path: /api/v1/api-docs
   packages-to-scan: com.tpx.urlshort.controller
-
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info,metrics
-
   endpoint:
     health:
       show-details: always
-
+      probes:
+        enabled: true
   metrics:
     enable:
       jvm: true
@@ -35,3 +41,21 @@ snowflake:
   datacenter-id: 2
   epoch-reference: 1767225600
 
+app:
+  cache:
+    ttl-seconds: 600
+  cors:
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - OPTIONS
+    allowed-headers:
+      - "*"
+    allow-credentials: true
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

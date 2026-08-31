@@ -2,6 +2,7 @@ package com.tpx.urlshort.controller;
 
 import com.tpx.urlshort.dto.UrlRequestDTO;
 import com.tpx.urlshort.dto.UrlResponseDTO;
+import com.tpx.urlshort.exception.IllegalParametersException;
 import com.tpx.urlshort.service.UrlService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -30,7 +31,6 @@ public class UrlController {
 
     private static final Logger logger = LoggerFactory.getLogger(UrlController.class);
 
-
     private final UrlService urlService;
 
     public UrlController(UrlService urlService) {
@@ -49,7 +49,8 @@ public class UrlController {
     @Operation(summary = "Redirect to full URL")
     @ApiResponse(responseCode = "302", description = "Redirect to the original URL")
     @ApiResponse(responseCode = "404", description = "Alias not found")
-    public ResponseEntity<Void> redirectToFullUrl(@PathVariable @NotBlank(message = "Alias cannot be empty") @Size(min = 3, max = 50, message = "Alias must be between 3 and 50 characters") String alias) {
+    public ResponseEntity<Void> redirectToFullUrl(
+            @PathVariable @NotBlank(message = "Alias cannot be empty") @Size(min = 3, max = 50, message = "Alias must be between 3 and 50 characters") String alias) {
         String destinationUrl = urlService.findByAlias(alias).actualUrl();
         logger.info("{} redirecting to the url {} ", alias, destinationUrl);
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(destinationUrl)).build();
@@ -60,15 +61,23 @@ public class UrlController {
     @ApiResponse(responseCode = "204", description = "Successfully deleted")
     @ApiResponse(responseCode = "404", description = "Alias not found")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUrl(@PathVariable @NotBlank(message = "Alias cannot be empty") @Size(min = 3, max = 50, message = "Alias must be between 3 and 50 characters") String alias) {
+    public void deleteUrl(
+            @PathVariable @NotBlank(message = "Alias cannot be empty") @Size(min = 3, max = 50, message = "Alias must be between 3 and 50 characters") String alias) {
         urlService.delete(alias);
     }
-
 
     @GetMapping("/urls")
     @Operation(summary = "List all shortened URLs")
     @ApiResponse(responseCode = "200", description = "A list of shortened URLs")
-    public ResponseEntity<Page<UrlResponseDTO>> listAllUrls(@ParameterObject @PageableDefault(size = 10) Pageable pageable) {
+    public ResponseEntity<Page<UrlResponseDTO>> listAllUrls(
+            @ParameterObject @PageableDefault(size = 10) Pageable pageable) {
+        // Validate page size to prevent DOS attacks
+        final int MAX_PAGE_SIZE = 100;
+        if (pageable.getPageSize() > MAX_PAGE_SIZE) {
+            throw new IllegalParametersException(
+                    String.format("Page size cannot exceed %d. Requested size: %d", MAX_PAGE_SIZE,
+                            pageable.getPageSize()));
+        }
         return ResponseEntity.ok(urlService.getAll(pageable));
     }
 

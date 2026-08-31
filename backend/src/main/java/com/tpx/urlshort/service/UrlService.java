@@ -1,5 +1,6 @@
 package com.tpx.urlshort.service;
 
+import com.tpx.urlshort.cache.redis.UrlCacheService;
 import com.tpx.urlshort.domain.UrlDetails;
 import com.tpx.urlshort.dto.UrlRequestDTO;
 import com.tpx.urlshort.dto.UrlResponseDTO;
@@ -25,13 +26,15 @@ public class UrlService {
     private static final Logger logger = LoggerFactory.getLogger(UrlService.class);
     private final UrlRepository urlRepository;
     private final AliasResolver aliasResolver;
+    private final UrlCacheService urlCacheService;
 
     @Value("${app.base-url:http://localhost:8080/}")
     String appBaseUrl;
 
-    public UrlService(UrlRepository urlRepository, AliasResolver resolver) {
+    public UrlService(UrlRepository urlRepository, AliasResolver resolver, UrlCacheService urlCacheService) {
         this.urlRepository = urlRepository;
         this.aliasResolver = resolver;
+        this.urlCacheService = urlCacheService;
     }
 
     // for shortening the url
@@ -39,8 +42,13 @@ public class UrlService {
         String finalAlias = aliasResolver.resolveAndGenerate(urlRequestDTO);
         try {
             logger.info("final alias - {} generated for the url - {}", finalAlias, urlRequestDTO.fullUrl());
-            return DTOMapper.mapToResponse(
-                    urlRepository.saveAndFlush(DTOMapper.mapToResponse(urlRequestDTO, finalAlias)), appBaseUrl);
+            UrlDetails savedDetails = urlRepository.saveAndFlush(DTOMapper.mapToResponse(urlRequestDTO, finalAlias));
+            try {
+                urlCacheService.put(finalAlias, savedDetails.getActualUrl());
+            } catch (RuntimeException e) {
+                logger.warn("Cache write skipped for alias '{}': {}", finalAlias, e.getMessage());
+            }
+            return DTOMapper.mapToResponse(savedDetails, appBaseUrl);
         } catch (DataAccessException e) {
             String message = String.format("The alias -%s already exist", finalAlias);
             logger.error("The alias -{} already  exist , reason: {}", finalAlias, e.getMessage());
@@ -49,6 +57,14 @@ public class UrlService {
     }
 
     public UrlResponseDTO findByAlias(String aliasName) {
+        try {
+            Optional<String> cachedActualUrl = urlCacheService.get(aliasName);
+            if (cachedActualUrl.isPresent()) {
+                return new UrlResponseDTO(appBaseUrl + aliasName, cachedActualUrl.get());
+            }
+        } catch (RuntimeException e) {
+            logger.warn("Cache read skipped for alias '{}': {}", aliasName, e.getMessage());
+        }
 
         Optional<UrlDetails> urlDetailsByShortUrl = findByAliasCommon(aliasName);
         if (urlDetailsByShortUrl.isEmpty()) {
@@ -56,8 +72,14 @@ public class UrlService {
             logger.error(message);
             throw new ItemNotFoundException(message);
         }
-        return DTOMapper.mapToResponse(urlDetailsByShortUrl.get(), appBaseUrl);
 
+        UrlDetails urlDetails = urlDetailsByShortUrl.get();
+        try {
+            urlCacheService.put(aliasName, urlDetails.getActualUrl());
+        } catch (RuntimeException e) {
+            logger.warn("Cache save skipped for alias '{}': {}", aliasName, e.getMessage());
+        }
+        return DTOMapper.mapToResponse(urlDetails, appBaseUrl);
     }
 
     public Page<UrlResponseDTO> getAll(Pageable pageable) {
@@ -73,6 +95,11 @@ public class UrlService {
             throw new ItemNotFoundException(message);
         }
         urlRepository.deleteById(urlDetailsByAlias.get().getId());
+        try {
+            urlCacheService.evict(alias);
+        } catch (RuntimeException e) {
+            logger.warn("Cache eviction skipped for alias '{}': {}", alias, e.getMessage());
+        }
     }
 
     Optional<UrlDetails> findByAliasCommon(String aliasName) {

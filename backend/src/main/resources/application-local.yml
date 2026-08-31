@@ -1,16 +1,34 @@
 spring:
-  flyway:
-    clean-disabled: true
-    baseline-on-migrate: true
-    enabled: true
   jpa:
     show-sql: true
     hibernate:
       ddl-auto: update
-    database-platform: org.hibernate.community.dialect.SQLiteDialect
   datasource:
     driver-class-name: org.sqlite.JDBC
     url: jdbc:sqlite:data/url_shortener.db
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+
+springdoc:
+  swagger-ui:
+    enabled: true
+  api-docs:
+    enabled: true
+    path: /api/v1/api-docs
 
 app:
-  base-url: http://localhost:8080/
+  base-url: http://localhost:8585/api/v1/
+  cors:
+    allowed-origins:
+      - http://localhost:5173
+      - http://localhost:5174
+
+logging:
+  level:
+    root: INFO
+    com.tpx.urlshort: DEBUG
+    org.springframework.web: DEBUG
+
