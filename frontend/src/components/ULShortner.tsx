@@ -31,6 +31,7 @@ function URLShortner({ onUrlCreated }: URLShortnerProps) : React.ReactElement {
   const [apiError, setApiError] = React.useState<ApiErrorResponse | null>(null);
   const [error, setError] = React.useState<string>('');
   const [result, setResult] = React.useState<string>('');
+  const [copyMessage, setCopyMessage] = React.useState<string>('');
 
   const handleChange = (field: 'fullUrl' | 'customAlias', value: string) => {
    setForm((prev) => ({ ...prev, [field]: value }));
@@ -38,6 +39,8 @@ function URLShortner({ onUrlCreated }: URLShortnerProps) : React.ReactElement {
 
    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
    event.preventDefault();
+    setError('');
+    setApiError(null);
 
     // get the trimmed URL from the form state
     const trimmedUrl = form.fullUrl.trim();
@@ -59,9 +62,8 @@ function URLShortner({ onUrlCreated }: URLShortnerProps) : React.ReactElement {
     //input validation  - EOC
 
     setLoading(true);
-    setError('');
-    setApiError(null);
     setResult('');
+  setCopyMessage('');
 
     try {
       console.log('Submitting:', { fullUrl: trimmedUrl, customAlias: form.customAlias.trim() || undefined });
@@ -92,9 +94,9 @@ function URLShortner({ onUrlCreated }: URLShortnerProps) : React.ReactElement {
     if (!result) return;
     try {
       await navigator.clipboard.writeText(result);
-      alert('Short URL copied to clipboard');
+      setCopyMessage('Short URL copied to clipboard.');
     } catch {
-      alert('Unable to copy automatically. Please copy the URL manually.');
+      setCopyMessage('Unable to copy automatically. Please copy the URL manually.');
     }
   };
   
@@ -103,6 +105,8 @@ function URLShortner({ onUrlCreated }: URLShortnerProps) : React.ReactElement {
     setForm(initialForm);
     setError('');
     setResult('');
+    setApiError(null);
+    setCopyMessage('');
   }
 
   return (
@@ -196,6 +200,9 @@ function URLShortner({ onUrlCreated }: URLShortnerProps) : React.ReactElement {
               >
                 Copy to Clipboard
               </button>
+              {copyMessage && (
+                <p className="mt-2 text-sm font-medium text-cyan-800">{copyMessage}</p>
+              )}
             </div>
           )}
 

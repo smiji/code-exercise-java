@@ -77,7 +77,7 @@ describe('apiCaller integration', () => {
       const apiError = error as ApiError;
       expect(apiError.details.status).toBe(500);
       expect(apiError.details.error).toBe('Internal Server Error');
-      expect(apiError.details.message).toBe('Failed to delete URL');
+      expect(apiError.details.message).toBe('Delete failed on server');
       expect(apiError.details.timestamp.length).toBeGreaterThan(0);
     }
   });

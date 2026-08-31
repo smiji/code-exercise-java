@@ -1,17 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { API_BASE_URL } from '../api/config';
+import { ApiError, deleteUrl, getUrlsPage, type PageResponse } from '../api/apiCaller';
 import type { UrlRecord } from '../types/UrlRecord';
-
-type PageResponse<T> = {
-  content: T[];
-  totalPages: number;
-  totalElements: number;
-  number: number;
-  size: number;
-  first: boolean;
-  last: boolean;
-  numberOfElements: number;
-};
 
 type UrlListProps = {
   refreshToken?: number;
@@ -53,25 +42,18 @@ function UrlList({ refreshToken = 0 }: UrlListProps): React.ReactElement {
       setError(null);
 
       try {
-        const params = new URLSearchParams({
-          page: String(page),
-          size: String(pageSize),
+        const data = await getUrlsPage({
+          page,
+          size: pageSize,
+          alias: filter.trim() || undefined,
         });
-
-        if (filter.trim()) {
-          params.set('alias', filter.trim());
-        }
-        console.log('Fetching URLs with params:', params.toString());
-        const response = await fetch(`${API_BASE_URL}/api/v1/urls?${params.toString()}`);
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch URLs');
-        }
-
-        const data = (await response.json()) as PageResponse<UrlRecord>;
         setPageData(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Something went wrong');
+        if (err instanceof ApiError) {
+          setError(err.details.message);
+        } else {
+          setError(err instanceof Error ? err.message : 'Something went wrong');
+        }
       } finally {
         setLoading(false);
       }
@@ -93,14 +75,7 @@ function UrlList({ refreshToken = 0 }: UrlListProps): React.ReactElement {
     const alias = getAlias(confirmDelete);
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/v1/${encodeURIComponent(alias)}`,
-        { method: 'DELETE' }
-      );
-
-      if (!response.ok) {
-        throw new Error('Delete failed');
-      }
+      await deleteUrl(alias);
 
       setConfirmDelete(null);
 
@@ -110,7 +85,11 @@ function UrlList({ refreshToken = 0 }: UrlListProps): React.ReactElement {
         setReloadToken((prev) => prev + 1);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to delete');
+      if (err instanceof ApiError) {
+        setError(err.details.message);
+      } else {
+        setError(err instanceof Error ? err.message : 'Unable to delete');
+      }
     }
   };
 

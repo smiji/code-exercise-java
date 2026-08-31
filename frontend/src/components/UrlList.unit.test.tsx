@@ -87,7 +87,7 @@ describe('UrlList unit', () => {
 
     render(<UrlList />);
 
-    const errorText = await screen.findByText('Failed to fetch URLs');
-    expect(errorText.textContent).toContain('Failed to fetch URLs');
+    const errorText = await screen.findByText('server failed');
+    expect(errorText.textContent).toContain('server failed');
   });
 });

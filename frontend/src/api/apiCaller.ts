@@ -1,6 +1,18 @@
 import type { ApiErrorResponse } from '../types/ApiErrorResponse';
 import type { UrlRequest, UrlResponse, UrlItem } from '../types/url';
+import type { UrlRecord } from '../types/UrlRecord';
 import { API_BASE_URL } from './config';
+
+export type PageResponse<T> = {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+  numberOfElements: number;
+};
 
 export class ApiError extends Error {
   details: ApiErrorResponse;
@@ -27,16 +39,19 @@ function isApiErrorResponse(value: unknown): value is ApiErrorResponse {
 }
 
 async function parseApiError(response: Response, fallbackMessage: string): Promise<ApiErrorResponse> {
-  try {
-    const body = (await response.json()) as unknown;
-    if (isApiErrorResponse(body)) {
-      return body;
+  const text = await response.text().catch(() => '');
+
+  if (text) {
+    try {
+      const body = JSON.parse(text) as unknown;
+      if (isApiErrorResponse(body)) {
+        return body;
+      }
+    } catch {
+      // Fall through to plain text error body handling.
     }
-  } catch {
-    // fall through to generic payload below
   }
 
-  const text = await response.text().catch(() => '');
   return {
     status: response.status,
     error: response.statusText || 'Request failed',
@@ -45,9 +60,9 @@ async function parseApiError(response: Response, fallbackMessage: string): Promi
   };
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
+async function handleResponse<T>(response: Response, fallbackMessage = 'Request failed'): Promise<T> {
   if (!response.ok) {
-    const errorBody = await parseApiError(response, 'Request failed');
+    const errorBody = await parseApiError(response, fallbackMessage);
     throw new ApiError(errorBody);
   }
 
@@ -71,8 +86,26 @@ export async function getAllUrls(): Promise<UrlItem[]> {
   return handleResponse<UrlItem[]>(response);
 }
 
+export async function getUrlsPage(query: {
+  page: number;
+  size: number;
+  alias?: string;
+}): Promise<PageResponse<UrlRecord>> {
+  const params = new URLSearchParams({
+    page: String(query.page),
+    size: String(query.size),
+  });
+
+  if (query.alias) {
+    params.set('alias', query.alias);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/v1/urls?${params.toString()}`);
+  return handleResponse<PageResponse<UrlRecord>>(response, 'Failed to fetch URLs');
+}
+
 export async function deleteUrl(alias: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/${alias}`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/${encodeURIComponent(alias)}`, {
     method: 'DELETE',
   });
 
