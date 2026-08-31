@@ -42,3 +42,26 @@ It should:
   - How to build and run locally.
   - Example usage (frontend and API).
   - Any notes or assumptions.
+
+## How to run the application
+
+Prerequisites:
+
+- Docker (with Docker Compose)
+- JDK 21 (required for local backend build/test outside Docker)
+
+- From the repo root, run: docker compose up --build -d
+- Open frontend at http://localhost
+- Backend API is at http://localhost:8585
+- Redis is at localhost:6379 (primarily internal, but exposed)
+
+- Network: defined in docker-compose.yml
+- Volume: defined in docker-compose.yml
+- Port mappings:
+  defined per service in docker-compose.yml
+
+## Notes / Assumptions
+
+- In `backend/src/main/resources/application-docker.yml`, Redis host is set to `host.docker.internal` as a default.
+- In `docker-compose.yml`, backend sets `SPRING_DATA_REDIS_HOST=redis` (and port `6379`) via environment variables.
+- This is intentional and works in Docker Compose because Spring Boot resolves environment variables with higher precedence than values in `application-docker.yml`.
