@@ -1,0 +1,10 @@
+
+====================================================================
+-> Apply Error handling                       :: done
+-> Write Unit testing for the URLShortner     :: done
+-> Add the second part of the code  
+    -> The URL display                        :: done
+    -> Delete                                 :: done
+    -> Unit testing
+-> Add the CSS file for the styling
+====================================================================
